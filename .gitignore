@@ -8,6 +8,7 @@ __pycache__/
 .DS_Store
 
 # 保存的模型（文件太大，GitHub 不接受）
+best_saved_model_roberta/
 best_saved_model/
 saved_model/
 
