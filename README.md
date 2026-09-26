@@ -10,7 +10,7 @@
 
 针对单模型性能瓶颈，引入多模型融合（Ensemble）。分别微调 `bert-base-chinese` 与 `hfl/chinese-roberta-wwm-ext`，采用 Softmax 概率软投票进行融合。
 
-通过模型互补效应，将测试集 **Macro-F1 进一步从 0.9550 提升至 0.9567**，混淆矩阵各项指标均达到最优。
+通过模型互补效应，在统一测试集上最终达到 **Macro-F1 0.9586 ± 0.0008**，各指标均达到最优。
 
 ## 核心工作
 
@@ -18,7 +18,7 @@
 - **模型微调**：手写 PyTorch 训练循环，使用 `AdamW` 优化器，学习率设为 `2e-5`，结合早停机制防止过拟合。
 - **对抗训练**：实现 FGM 对抗训练，在 Embedding 层添加梯度扰动，累加正常梯度与对抗梯度。
 - **多模型融合**：分别微调 BERT 与 RoBERTa-wwm-ext，将模型输出转换为 Softmax 概率，通过软投票得到最终预测。
-- **深度评估**：采用 Precision、Recall、Macro-F1 及混淆矩阵评估模型表现。
+- **深度评估**：采用 Precision、Recall、Macro-F1 及混淆矩阵评估模型表现，并进行了完整的消融实验与错误分析。
 - **工程部署**：基于 FastAPI 封装推理接口，利用 Pydantic 进行数据验证，自动生成 Swagger 文档。
 
 ## 消融实验与多次实验 (Ablation Study & Repeated Experiments)
@@ -74,17 +74,21 @@
 ## 项目结构
 
 ```text
-.
-├── w1d1_bert_hello.py     # BERT 基础加载与推理验证
-├── w1d2_train.py          # BERT 基础微调训练
-├── w1d3_inference.py      # 模型保存与单条文本推理
-├── w1d4_deep_train.py     # 核心训练脚本（含早停与 FGM 对抗训练）
-├── w1d5_roberta_train.py  # RoBERTa-wwm-ext 微调训练
-├── w1d6_ensemble.py       # BERT 与 RoBERTa 的 Softmax 概率软投票融合
-├── main.py               # FastAPI 推理服务入口
-├── requirements.txt      # 环境依赖
-├── .gitignore            # Git 忽略文件配置
-└── README.md             # 项目说明文档
+bert-sentiment-analysis/
+├── app/
+│   └── main.py                 # FastAPI 推理服务入口
+├── checkpoints/                # 存放所有训练好的模型权重（通过 .gitignore 忽略，不传Git）
+├── scripts/                    # 存放所有入口脚本
+│   ├── train_baseline.py       # 基础 BERT 训练
+│   ├── train_bert_fgm.py       # BERT + FGM 训练
+│   ├── train_roberta_fgm.py    # RoBERTa + FGM 训练
+│   ├── ensemble_eval.py        # 多模型融合评估
+│   ├── error_analysis.py       # 错误分析
+│   ├── evaluate.py             # 通用测试集评估
+│   └── inference.py            # 推理演示
+├── .gitignore
+├── README.md
+└── requirements.txt
 ```
 
 ## 环境配置
@@ -109,13 +113,13 @@ pip install -r requirements.txt
 ### 1. BERT 模型训练（含早停与 FGM）
 
 ```bash
-python -X utf8 -u w1d4_deep_train.py
+python -X utf8 -u scripts/train_bert_fgm.py
 ```
 
 ### 2. RoBERTa-wwm-ext 模型训练
 
 ```bash
-python -X utf8 -u w1d5_roberta_train.py
+python -X utf8 -u scripts/train_roberta_fgm.py
 ```
 
 ### 3. 多模型融合
@@ -123,13 +127,13 @@ python -X utf8 -u w1d5_roberta_train.py
 完成两个模型的训练并保存模型后，运行融合脚本：
 
 ```bash
-python -X utf8 -u w1d6_ensemble.py
+python -X utf8 -u scripts/ensemble_eval.py
 ```
 
 ### 4. 启动推理服务
 
 ```bash
-python -m uvicorn main:app --reload --port 8000
+python -m uvicorn app.main:app --reload --port 8000
 ```
 
 ### 5. 调用 API 接口
@@ -157,3 +161,9 @@ python -m uvicorn main:app --reload --port 8000
 ```
 
 > 响应中的数值仅为示例，实际输出以模型推理结果为准。
+
+### 6. 单条文本推理演示
+
+```bash
+python -X utf8 -u scripts/inference.py
+```
