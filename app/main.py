@@ -5,7 +5,7 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 # ========== 1. 加载模型（只在启动时执行一次） ==========
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model_path = "best_saved_model"
+model_path = r"C:\Users\123\Desktop\Anaconda Projects\ai_learning\bert-sentiment-analysis\checkpoints\bert_fgm_seed42"
 tokenizer = AutoTokenizer.from_pretrained(model_path)
 model = AutoModelForSequenceClassification.from_pretrained(model_path).to(device)
 model.eval()

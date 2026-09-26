@@ -1,7 +1,7 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-save_path = "./saved_model"
+save_path = r"C:\Users\123\Desktop\Anaconda Projects\ai_learning\bert-sentiment-analysis\checkpoints\bert_fgm_seed42"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 print("正在加载模型...")

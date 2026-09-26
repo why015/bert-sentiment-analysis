@@ -1,3 +1,17 @@
+import random
+import numpy as np
+import torch
+
+def set_seed(seed=42):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+set_seed(42)
+
 import torch
 import numpy as np
 from torch.utils.data import DataLoader
@@ -13,8 +27,8 @@ tokenizer = AutoTokenizer.from_pretrained(model_name)
 # 2. 加载两个模型
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("正在加载模型...")
-model_bert = AutoModelForSequenceClassification.from_pretrained("./best_saved_model").to(device)
-model_roberta = AutoModelForSequenceClassification.from_pretrained("./best_saved_model_roberta").to(device)
+model_bert = AutoModelForSequenceClassification.from_pretrained(r"C:\Users\123\Desktop\Anaconda Projects\ai_learning\bert-sentiment-analysis\checkpoints\bert_fgm_seed42").to(device)
+model_roberta = AutoModelForSequenceClassification.from_pretrained(r"C:\Users\123\Desktop\Anaconda Projects\ai_learning\bert-sentiment-analysis\checkpoints\roberta_seed42").to(device)
 model_bert.eval()
 model_roberta.eval()
 

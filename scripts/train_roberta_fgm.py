@@ -1,3 +1,17 @@
+import random
+import numpy as np
+import torch
+
+def set_seed(seed=1234):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+set_seed(1234)
+
 import torch
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
@@ -7,7 +21,7 @@ from tqdm import tqdm
 from sklearn.metrics import classification_report, confusion_matrix, f1_score
 
 dataset = load_dataset("lansinuote/ChnSentiCorp")
-model_name = "bert-base-chinese"
+model_name = "hfl/chinese-roberta-wwm-ext"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
 
@@ -51,7 +65,7 @@ class FGM:
         self.backup = {}
 
 
-save_path = "./best_saved_model"
+save_path = r"C:\Users\123\Desktop\Anaconda Projects\ai_learning\bert-sentiment-analysis\checkpoints\roberta_seed42"
 best_f1 = 0.0
 patience = 2 
 patience_counter = 0
