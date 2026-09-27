@@ -2,23 +2,25 @@
 
 ## 项目简介
 
-本项目基于 `bert-base-chinese` 预训练模型，针对中文酒店评论数据集 `ChnSentiCorp` 进行情感分析微调。
+本项目以中文酒店评论数据集 `ChnSentiCorp` 为载体，完成了一次**从传统微调到 LLM 应用再到本地私有化部署**的完整技术选型实践。
 
-项目涵盖数据处理、模型训练、深度评估和 FastAPI 工程部署，并引入早停机制与 FGM 对抗训练。
+覆盖三条技术路线：
+1. **传统微调**：基于 `bert-base-chinese` 与 `hfl/chinese-roberta-wwm-ext` 手写训练循环，引入 FGM 对抗训练与多模型软投票融合，Macro-F1 达 **0.9586 ± 0.0008**。
+2. **LLM 提示工程**：评测 DeepSeek-V4.1 Flash 的 Zero-shot / Few-shot 表现，并用配对 Bootstrap 检验差异显著性。
+3. **本地私有化**：基于 Ollama + QLoRA 微调 Qwen2.5-3B，在 8GB 显存下完成部署，Macro-F1 达 **0.9258**。
 
-### 升级版：多模型融合
-
-针对单模型性能瓶颈，引入多模型融合（Ensemble）。分别微调 `bert-base-chinese` 与 `hfl/chinese-roberta-wwm-ext`，采用 Softmax 概率软投票进行融合。
-
-通过模型互补效应，在统一测试集上最终达到 **Macro-F1 0.9586 ± 0.0008**，各指标均达到最优。
+并通过 Cascade 难例路由实验、成本-延迟-精度三维散点图、错误分析对比，给出最终的工业架构选型建议。
 
 ## 核心工作
 
 - **数据工程**：使用 Hugging Face `datasets` 库进行批量分词，采用 `DataCollatorWithPadding` 实现动态填充。
-- **模型微调**：手写 PyTorch 训练循环，使用 `AdamW` 优化器，学习率设为 `2e-5`，结合早停机制防止过拟合。
-- **对抗训练**：实现 FGM 对抗训练，在 Embedding 层添加梯度扰动，累加正常梯度与对抗梯度。
-- **多模型融合**：分别微调 BERT 与 RoBERTa-wwm-ext，将模型输出转换为 Softmax 概率，通过软投票得到最终预测。
-- **深度评估**：采用 Precision、Recall、Macro-F1 及混淆矩阵评估模型表现，并进行了完整的消融实验与错误分析。
+- **BERT 微调**：手写 PyTorch 训练循环，使用 `AdamW` 优化器，结合早停机制防止过拟合。
+- **对抗训练**：实现 FGM 对抗训练，在 Embedding 层添加梯度扰动，三个种子平均提升 +1.41 pp。
+- **多模型融合**：分别微调 BERT 与 RoBERTa-wwm-ext，通过 Softmax 概率软投票融合。
+- **LLM 评测**：在统一 1200 条测试集上评测 DeepSeek-V4.1 Flash 的 Zero-shot / Few-shot 表现，涵盖 F1、Recall、延迟、成本等 8 个维度。
+- **本地私有化**：基于 Ollama 部署 Qwen2.5-3B，使用 QLoRA（4-bit NF4）在 RTX 4060 上微调，仅 0.12% 参数可训练。
+- **统计检验**：采用配对 Bootstrap（10000 次重采样）验证各方案差异的统计显著性。
+- **工程分析**：Cascade 难例路由实验、成本-延迟-精度三维散点图、错误分析对比。
 - **工程部署**：基于 FastAPI 封装推理接口，利用 Pydantic 进行数据验证，自动生成 Swagger 文档。
 
 ## 消融实验与多次实验 (Ablation Study & Repeated Experiments)
@@ -230,23 +232,57 @@
 
 1. **LLM 的“错误”中有相当比例实际是数据集的标签噪声**。LLM 的语义判断更接近人类直觉，但因数据集标注错误反而被判为“错”。这说明**在低质量数据集上，更强的模型不一定获得更高的 F1**。
 2. **BERT 的错误主要集中在反讽、隐式情感和长文本转折**，这是它的天然短板，也是 LLM 的绝对优势领域。
-3. **工程启示**：评估模型时不能只看 F1，必须结合错误样本的人工复核。如果数据集本身有 30% 以上的标签噪声，任何模型的 F1 上限都会被严重压制。**这也是 Cascade 路由策略在本项目上失效的根本原因——把"数据标错"误判为"模型能力不足"。**
+3. **工程启示**：评估模型时不能只看 F1，必须结合错误样本的人工复核。如果数据集本身有 30% 以上的标签噪声，任何模型的 F1 上限都会被严重压制。**这也是 Cascade 路由策略在本项目上失效的重要原因之一——把"可能存在的标签噪声"误判为"模型能力不足"。** 需注意该推断基于错误分析章节的 33% 标签噪声比例（来自 51 条错误样本），不能直接外推为 60 条难例中的精确比例。
 
 ## 项目结构
 
 ```text
 bert-sentiment-analysis/
 ├── app/
-│   └── main.py                 # FastAPI 推理服务入口
-├── checkpoints/                # 存放所有训练好的模型权重（通过 .gitignore 忽略，不传Git）
-├── scripts/                    # 存放所有入口脚本
-│   ├── train_baseline.py       # 基础 BERT 训练
-│   ├── train_bert_fgm.py       # BERT + FGM 训练
-│   ├── train_roberta_fgm.py    # RoBERTa + FGM 训练
-│   ├── ensemble_eval.py        # 多模型融合评估
-│   ├── error_analysis.py       # 错误分析
-│   ├── evaluate.py             # 通用测试集评估
-│   └── inference.py            # 推理演示
+│   └── main.py                     # FastAPI 推理服务入口
+├── checkpoints/                    # 模型权重（gitignore）
+├── data/
+│   └── test.jsonl                  # 统一标准测试集（1200 条）
+├── prompts/
+│   └── prompts.yaml                # LLM Prompt 模板（zero/few/cot/json）
+├── results/
+│   ├── cost_latency_accuracy.png   # 成本-延迟-精度三维散点图
+│   ├── cascade_metrics.json        # Cascade 实验指标
+│   ├── bootstrap_significance.json # Bootstrap 显著性检验结果
+│   ├── fewshot_hard_subset_analysis.json
+│   ├── unified_evaluation.json     # 统一评估汇总
+│   └── unified/                    # 所有模型的 per-sample 预测（npy）
+├── scripts/
+│   ├── train_baseline.py           # BERT Baseline 训练
+│   ├── train_bert_fgm.py           # BERT + FGM 训练
+│   ├── train_roberta_fgm.py        # RoBERTa + FGM 训练
+│   ├── ensemble_eval.py            # 多模型融合评估
+│   ├── error_analysis.py           # 错误分析
+│   ├── evaluate.py                 # 通用测试集评估
+│   ├── inference.py                # 推理演示
+│   ├── benchmark_latency.py        # 单模型延迟测速
+│   ├── unified_evaluate.py         # 统一评估脚本（所有模型走同一套指标）
+│   ├── unify_predictions.py        # 统一保存 per-sample 预测
+│   ├── bootstrap_significance.py   # 配对 Bootstrap 显著性检验
+│   ├── fewshot_hard_subset.py      # Few-shot 难例子集分析
+│   ├── cascade_save_probs.py       # Cascade 难例路由 - 保存概率
+│   ├── cascade_evaluate.py         # Cascade 难例路由 - 评估
+│   ├── save_single_model_preds.py  # 保存 BERT/RoBERTa 单模型预测
+│   ├── plot_cost_latency_accuracy.py # 三维散点图绘制
+│   └── llm/                        # LLM 相关脚本
+│       ├── prepare_data.py         # 生成标准 test.jsonl
+│       ├── prepare_llama_data.py   # 生成 Alpaca 格式训练数据
+│       ├── llm_api_evaluate.py     # DeepSeek API 评测
+│       ├── llm_local_evaluate.py   # 本地 Qwen 评测
+│       ├── qlora_finetune.py       # QLoRA 微调
+│       ├── merge_lora.py           # 合并 LoRA 权重
+│       ├── evaluate_merged_model.py # 微调后模型评测
+│       ├── save_qwen_lora_preds.py # 保存 Qwen LoRA 预测
+│       ├── compute_f1.py           # 从 jsonl 计算正负 F1
+│       ├── check_failures.py       # 查看解析失败样本
+│       ├── check_output.py         # 查看原始输出
+│       ├── debug_response.py       # API 调试
+│       └── Modelfile               # Ollama 模型定义
 ├── .gitignore
 ├── README.md
 └── requirements.txt
@@ -327,4 +363,64 @@ python -m uvicorn app.main:app --reload --port 8000
 
 ```bash
 python -X utf8 -u scripts/inference.py
+```
+
+### 7. LLM Zero-shot / Few-shot 评测（DeepSeek API）
+
+```bash
+# 需先设置环境变量 DEEPSEEK_API_KEY
+$env:DEEPSEEK_API_KEY = "sk-xxxx"
+python -X utf8 -u scripts/llm/llm_api_evaluate.py --prompt_type zero_shot --sample_size -1
+python -X utf8 -u scripts/llm/llm_api_evaluate.py --prompt_type few_shot --sample_size -1
+```
+
+### 8. 本地 Qwen2.5-3B 部署与评测
+
+```bash
+# 拉取模型
+ollama pull qwen2.5:3b
+# 本地评测
+python -X utf8 -u scripts/llm/llm_local_evaluate.py --prompt_type zero_shot --sample_size -1
+```
+
+### 9. QLoRA 微调与部署
+
+```bash
+# 生成 Alpaca 格式训练数据
+python -X utf8 -u scripts/llm/prepare_llama_data.py
+# QLoRA 微调
+python -X utf8 -u scripts/llm/qlora_finetune.py
+# 合并 LoRA 权重到 FP16 基座
+python -X utf8 -u scripts/llm/merge_lora.py
+# 微调后模型评测
+python -X utf8 -u scripts/llm/evaluate_merged_model.py
+```
+
+### 10. 统一评估与统计分析
+
+```bash
+# 统一评估所有模型（输出 Macro-F1、正负 F1、正负 Recall、混淆矩阵等）
+python -X utf8 -u scripts/unified_evaluate.py
+# 配对 Bootstrap 显著性检验（10000 次重采样）
+python -X utf8 -u scripts/bootstrap_significance.py
+# Few-shot 难例子集分析
+python -X utf8 -u scripts/fewshot_hard_subset.py
+# 成本-延迟-精度三维散点图
+python -X utf8 -u scripts/plot_cost_latency_accuracy.py
+```
+
+### 11. Cascade 难例路由实验
+
+```bash
+# 步骤 1：保存 BERT + Ensemble 的 per-sample 置信度
+python -X utf8 -u scripts/cascade_save_probs.py
+# 步骤 2：将低置信度难例交由 DeepSeek 重判并评估
+python -X utf8 -u scripts/cascade_evaluate.py
+```
+
+### 12. 延迟测速
+
+```bash
+# 单模型 P50/P95/P99 延迟实测
+python -X utf8 -u scripts/benchmark_latency.py
 ```
