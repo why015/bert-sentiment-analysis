@@ -1,0 +1,57 @@
+{
+  "bert_fgm_vs_ensemble": {
+    "model_a": "bert_fgm",
+    "model_b": "ensemble",
+    "mean_delta": 0.0017,
+    "ci_95": [
+      -0.0042,
+      0.0075
+    ],
+    "p_value": 0.6252,
+    "significant": false
+  },
+  "bert_fgm_vs_roberta_fgm": {
+    "model_a": "bert_fgm",
+    "model_b": "roberta_fgm",
+    "mean_delta": 0.0058,
+    "ci_95": [
+      -0.0017,
+      0.0134
+    ],
+    "p_value": 0.1524,
+    "significant": false
+  },
+  "bert_fgm_vs_qwen_lora": {
+    "model_a": "bert_fgm",
+    "model_b": "qwen_lora",
+    "mean_delta": 0.0351,
+    "ci_95": [
+      0.0217,
+      0.0492
+    ],
+    "p_value": 0.0,
+    "significant": true
+  },
+  "ensemble_vs_qwen_lora": {
+    "model_a": "ensemble",
+    "model_b": "qwen_lora",
+    "mean_delta": 0.0334,
+    "ci_95": [
+      0.0192,
+      0.0475
+    ],
+    "p_value": 0.0,
+    "significant": true
+  },
+  "bert_fgm_vs_deepseek-flash_zero_shot": {
+    "model_a": "bert_fgm",
+    "model_b": "deepseek-flash_zero_shot",
+    "mean_delta": 0.0668,
+    "ci_95": [
+      0.05,
+      0.0841
+    ],
+    "p_value": 0.0,
+    "significant": true
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "hard_subset_threshold": 0.9902,
+  "all": {
+    "n": 1200,
+    "zero_shot_acc": 0.8942,
+    "few_shot_acc": 0.8983,
+    "delta": 0.0042,
+    "both_correct": 1053,
+    "both_wrong": 102,
+    "zs_only_correct": 20,
+    "fs_only_correct": 25
+  },
+  "hard": {
+    "n": 240,
+    "zero_shot_acc": 0.7375,
+    "few_shot_acc": 0.7708,
+    "delta": 0.0333,
+    "both_correct": 172,
+    "both_wrong": 50,
+    "zs_only_correct": 5,
+    "fs_only_correct": 13
+  },
+  "easy": {
+    "n": 600,
+    "zero_shot_acc": 0.9717,
+    "few_shot_acc": 0.975,
+    "delta": 0.0033,
+    "both_correct": 578,
+    "both_wrong": 10,
+    "zs_only_correct": 5,
+    "fs_only_correct": 7
+  }
+}
