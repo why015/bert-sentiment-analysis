@@ -1,0 +1,6 @@
+FROM "C:/Users/123/Desktop/Anaconda Projects/ai_learning/bert-sentiment-analysis/checkpoints/qwen_merged_sentiment"
+
+TEMPLATE """{{ .Prompt }}"""
+
+PARAMETER temperature 0
+PARAMETER stop "###"

@@ -1,0 +1,35 @@
+{
+  "baseline": {
+    "macro_f1": 0.9592,
+    "accuracy": 0.9592,
+    "neg_f1": 0.9588,
+    "pos_f1": 0.9595,
+    "neg_recall": 0.9628,
+    "pos_recall": 0.9556
+  },
+  "cascade": {
+    "macro_f1": 0.9558,
+    "accuracy": 0.9558,
+    "neg_f1": 0.9557,
+    "pos_f1": 0.9559,
+    "neg_recall": 0.9662,
+    "pos_recall": 0.9457
+  },
+  "hard_subset": {
+    "n_hard": 60,
+    "ensemble_acc": 0.6333,
+    "llm_acc": 0.5789,
+    "cascade_acc": 0.5667
+  },
+  "cost": {
+    "hard_call_cost_yuan": 0.0161,
+    "normalized_to_1200_yuan": 0.3213
+  },
+  "latency": {
+    "llm_avg_s": 0.9754,
+    "llm_p95_s": 1.6489,
+    "end_to_end_avg_ms": 57.09,
+    "end_to_end_p95_ms": 91.83
+  },
+  "parse_fail": 0
+}

@@ -1,8 +1,28 @@
+# Python 缓存
 __pycache__/
 *.py[cod]
+
+# 编辑器
 .vscode/
 .idea/
+
+# 模型权重
 checkpoints/
 saved_model/
+
+# 第三方库（LLaMA-Factory 几百 MB，绝不上传）
+LLaMA-Factory/
+
+# 本地文档（个人笔记）
 *.docx
 ~$*
+
+# 日志文件
+logs/
+
+# 大文件（不上传，但保留 png 和 json）
+results/*.npy
+results/*.jsonl
+
+# 训练数据（9600 条，较大，可不上传）
+data/llm_train_data.json

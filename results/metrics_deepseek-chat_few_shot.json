@@ -1,0 +1,12 @@
+{
+  "model": "deepseek-chat",
+  "prompt_type": "few_shot",
+  "sample_size": 100,
+  "parse_fail_rate": 0.0,
+  "avg_latency": 0.6511,
+  "p95_latency": 0.8748,
+  "avg_input_tokens": 185.18,
+  "avg_output_tokens": 1.0,
+  "macro_f1": 0.8174,
+  "accuracy": 0.82
+}

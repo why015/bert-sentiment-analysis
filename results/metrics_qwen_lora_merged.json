@@ -1,0 +1,8 @@
+{
+  "model": "checkpoints/qwen_merged_sentiment",
+  "sample_size": 1200,
+  "parse_fail_rate": 0.0,
+  "p95_latency": 0.1876,
+  "macro_f1": 0.9258,
+  "accuracy": 0.9258
+}

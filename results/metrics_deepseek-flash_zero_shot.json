@@ -1,0 +1,12 @@
+{
+  "model": "deepseek-flash",
+  "prompt_type": "zero_shot",
+  "sample_size": 1200,
+  "parse_fail_rate": 0.0,
+  "avg_latency": 0.9556,
+  "p95_latency": 1.5708,
+  "avg_input_tokens": 138.18,
+  "avg_output_tokens": 72.52,
+  "macro_f1": 0.8941,
+  "accuracy": 0.8942
+}
